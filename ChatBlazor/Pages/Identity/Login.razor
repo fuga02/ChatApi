@@ -1,0 +1,54 @@
+﻿@page "/login"
+@using ChatBlazor.Models.IdentityModels
+@using Blazored.LocalStorage
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+@inject ILocalStorageService Storage
+<h3>Login</h3>
+
+
+
+<MudGrid>
+    <MudItem xs="12" sm="7">
+        <MudPaper Class="pa-4">
+            <MudForm @ref="form" @bind-IsValid="@success" @bind-Errors="@errors">
+                <MudTextField T="string" Label="Username" Required="true" @bind-value="loginAccount.Username" RequiredError="User name is required!" />
+                <MudTextField T="string"  Label="Password" HelperText="Choose a strong password" @bind-value="loginAccount.Password" @ref="pwField1"
+                              InputType="InputType.Password"
+                              RequiredError="Password is required!" />
+                
+                <div class="d-flex align-center justify-space-between">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!success)" @onclick="RegisterUser" Class="ml-auto">Login</MudButton>
+                </div>
+            </MudForm>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+
+@code {
+    bool success;
+    string[] errors = { };
+    MudTextField<string> pwField1;
+    MudForm form;
+    
+    
+    private LoginUserModel loginAccount = new LoginUserModel();
+    private async Task RegisterUser()
+    {
+       var response = await Http.PostAsJsonAsync("/api/Account/login", loginAccount);
+        if (response.IsSuccessStatusCode)
+       {
+           var result = await response.Content.ReadFromJsonAsync<LoginResult>();
+
+           if (!string.IsNullOrEmpty(result?.Token))
+           {
+               await Storage.SetItemAsStringAsync("token", result.Token);
+               NavigationManager.NavigateTo("/profile");
+           }
+       }
+       
+
+    }
+
+}
